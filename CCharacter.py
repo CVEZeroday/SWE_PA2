@@ -70,7 +70,12 @@ class CCharacterComponent(CCharacter):
     def update(self):
         #print(self.coord)
         super().update()
+        
+        if not self.visible:
+            self.visible = True
+        
         if self.coord == self.pivot.coord:
+            #self.visible = False
             if self.pivot != self.head:
                 self.pivot = self.pivot.prev
                 self.direction = (self.pivot.pos - self.pos).normalize2()
@@ -86,12 +91,12 @@ class CCharacterComponent(CCharacter):
         #print(self.head.pos - self.pos)
         #print("component: " + str(self.pos))
     def lateUpdate(self):
-        super().lateUpdate()
         if self.head.components[self.id - 1].direction == self.direction:
             _tmp = self.head.components[self.id - 1].pos - self.pos
             if (_tmp[0] == 0 or _tmp[1] == 0) and _tmp != self.direction * self._gameManager.cellSize:
                 self.pos = self.head.components[self.id - 1].pos - (self.direction * self._gameManager.cellSize)
         self.__setObjImage()
+        super().lateUpdate()
         
     def __setObjImage(self):
         if self.head.getLen - 1 == self.id:

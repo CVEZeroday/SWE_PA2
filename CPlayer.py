@@ -74,7 +74,7 @@ class CPlayer(CCharacter):
         return self.__len
     
     def addComponent(self):
-        component = CCharacterComponent(self, self.__len, self.__components[-1].pos + self.direction * (-1 * self._gameManager.cellSize), self.scale, self.__components[-1].coord + self.direction * -1)
+        component = CCharacterComponent(self, self.__len, self.__components[-1].pos + self.__components[-1].direction * (-1 * self._gameManager.cellSize), self.scale, self.__components[-1].coord + self.direction * -1)
         component.direction = self.__components[-1].direction
         self.__len += 1
         self.__components.append(component)
@@ -117,7 +117,7 @@ class CPlayer(CCharacter):
     
     def update(self):
         super().update()
-
+        
         if len(self.direction_buf) > self.__buffer_max_size:
             self.direction_buf.pop()
 

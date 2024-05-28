@@ -34,7 +34,7 @@ class GameManager:
     __displaySurf = None
     __basicFont = None
 
-    __fps = 60
+    __fps = 360
     __cellSize: int = 0
     __name = ""
     __screenSize = None
@@ -81,7 +81,7 @@ class GameManager:
         return self.__screenSize
     
     def parseOption(self, _option):
-        self.__fps = _option["fps"]
+        #self.__fps = _option["fps"]
         self.__name = _option["name"]
         self.__screenSize = WPair(_option["screenWidth"], _option["screenHeight"]).toInt()
         self.__screenWidth, self.__screenHeight = self.__screenSize[0], self.__screenSize[1]
@@ -150,15 +150,15 @@ class GameManager:
                 obj.lateUpdate()
             
             for obj in self.__objects:
-                if obj.drawLayer == 0:
+                if obj.drawLayer == 0 and obj.visible:
                     obj.draw(self.__displaySurf)
                     
             for obj in self.__objects:
-                if obj.drawLayer == 1:
+                if obj.drawLayer == 1 and obj.visible:
                     obj.draw(self.__displaySurf)
 
             for obj in self.__objects:
-                if obj.drawLayer == 2:
+                if obj.drawLayer == 2 and obj.visible:
                     obj.draw(self.__displaySurf)
                     
             pygame.display.update()

@@ -20,6 +20,8 @@ class WObject:
     scale = None
      
     objType = -1 # objType 0: playerHead, 1: playerBody, 2: playerBodyPivot 3: speedUp, 4: speedDown, 5: fever time, 6: wormhole entry, 7: wormhole exit
+    
+    objId: int = None
 
     drawLayer = 0 # 클수록 위에 그려짐. 0, 1, 2
     visible: bool = True
@@ -46,6 +48,9 @@ class WObject:
             self.coord = _coord
         else:
            self.coord = WPair(0, 0)
+       
+        self.objId = WObject.objId
+        WObject.objId += 1
        
         self._objImage = pygame.image.load("./assets/apple.png")
         self._objImageSize = (WPair(self._objImage.get_width(), self._objImage.get_height()).normalize() * self.scale *

@@ -9,6 +9,16 @@
 /********************************************/
 """
 
-class AIController:
-    def __init__(self):
-        pass
+class Controller:
+    
+    target = None
+    def __init__(self, target):
+        self.target = target
+
+class AIController(Controller):
+    def __init__(self, target):
+        super().__init__(target)
+
+class NetworkController(Controller):
+    def __init__(self, target):
+        super().__init__(target)

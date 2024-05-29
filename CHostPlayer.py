@@ -15,4 +15,4 @@ from CPlayer import CPlayer
 # class defining player who is played by host user
 class CHostPlayer(CPlayer):
     def __init__(self, _pos: WPair, _scale: WPair, _coord: WPair = None):
-        super().__init__(_pos, _scale, _coord)
+       super().__init__(_pos, _scale, _coord)

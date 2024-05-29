@@ -96,18 +96,10 @@ class GameManager:
         pygame.display.set_caption('Wormy')
 
     def beginLoop(self):
-        #_tmp = self.__fps
-        #self.__fps = 13
-        #self.__showStartScreen()
-        #self.__fps = _tmp
-        self.__mainLoop()
-            #_tmp = self.__fps
-            #self.__fps = 13
-            #self.__showGameOverScreen()
-            #self.__fps = _tmp
+        self.__mainLoop_host()
     
     # private
-    def __mainLoop(self):
+    def __mainLoop_host(self):
         while True:
             for event in pygame.event.get():
                 if event.type == QUIT:

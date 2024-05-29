@@ -16,11 +16,3 @@ from CPlayer import CPlayer
 class CClientPlayer(CPlayer):
     def __init__(self, _pos: WPair = None, _scale: WPair = None, _coord: WPair = None):
         super().__init__(_pos, _scale, _coord)
-
-class CNetworkPlayer(CClientPlayer):
-    def __init__(self, _pos: WPair, _scale: WPair, _coord: WPair):
-        super().__init__(_pos, _scale, _coord)
-
-class CAIPlayer(CClientPlayer):
-    def __init__(self, _pos: WPair, _scale: WPair, _coord: WPair):
-        super().__init__(_pos, _scale, _coord)

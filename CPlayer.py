@@ -118,7 +118,7 @@ class CPlayer(CCharacter):
     def update(self):
         super().update()
         
-        if len(self.direction_buf) > self.__buffer_max_size:
+        while len(self.direction_buf) > self.__buffer_max_size:
             self.direction_buf.pop()
 
         if self.__prev_coord != self.coord:

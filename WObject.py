@@ -21,7 +21,7 @@ class WObject:
      
     objType = -1 # objType 0: playerHead, 1: playerBody, 2: playerBodyPivot 3: speedUp, 4: speedDown, 5: fever time, 6: wormhole entry, 7: wormhole exit
     
-    objId: int = None
+    objId: int = 0
 
     drawLayer = 0 # 클수록 위에 그려짐. 0, 1, 2
     visible: bool = True

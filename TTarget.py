@@ -9,20 +9,33 @@
 /********************************************/
 """
 
+from WTypes import *
 from WObject import WObject
 
 class TTarget(WObject):
+    
+    # private
+    __targetType: int = 0
+    
     def __init__(self):
-        pass
+        super().__init__()
+        self._gameManager.registerTarget(self)
+        self.__setInitialPosition()
+        
+    def __setInitialPosition(self):
+        self.pos = WPair
 
 class TSpeedup(TTarget):
     def __init__(self):
-        pass
+        super().__init__()
+        self.objType = 3
 
-class TSpeeddown(TTarget):
+class TSpeedDown(TTarget):
     def __init__(self):
-        pass
+        super().__init__()
+        self.objType = 4
 
-class TFevertime(TTarget):
+class TFeverTime(TTarget):
     def __init__(self):
-        pass
+        super().__init__()
+        self.objType = 5

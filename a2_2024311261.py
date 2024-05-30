@@ -106,7 +106,7 @@ def main():
                 print("올바른 값을 입력해주세요.\n")
     
     print("게임을 시작합니다.")
-    debug_main()
+    debug_main(gameManager)
     gameManager.initPygame()
     gameManager.beginLoop()
     
@@ -114,8 +114,8 @@ def main():
     exit(0)
 
 @debug_func
-def debug_main():
-    CPlayer(WPair(0, 0), WPair(1, 1), WPair(0, 0))
+def debug_main(gameManager):
+    gameManager.local_player = CPlayer(WPair(0, 0), WPair(1, 1), WPair(0, 0))
     
 
 def debug():

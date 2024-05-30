@@ -30,6 +30,8 @@ class CPlayer(CCharacter):
     __prev_coord = None
     __buffer_max_size = 3
     
+    isGameOver: bool = True
+    
     def __init__(self, _pos: WPair = None, _scale: WPair = None, _coord: WPair = None):
         super().__init__(_pos, _scale, _coord)
         self.__components.append(self)
@@ -37,6 +39,8 @@ class CPlayer(CCharacter):
         self.objType = 0
         self.__prev_coord = self.coord
         self.direction_buf = deque()
+        
+        self.isGameOver = False
         
         self.addComponent()
         
@@ -139,8 +143,22 @@ class CPlayer(CCharacter):
     
     def lateUpdate(self):
         super().lateUpdate()
+        print(self.isGameOver)
         self.__setObjImage()
         
+    def checkGameOver(self):
+        for _object in self._gameManager.objects:
+            if _object.objType == 1 and _object.id != 1:
+                if _object.coord == self.coord:
+                    self.isGameOver = True
+                    return
+        
+        if self.coord[0] < 0 or self.coord[1] < 0:
+            self.isGameOver = True
+            return
+        if self.coord[0] > 64 or self.coord[1] > 36:
+            self.isGameOver = True
+            return
     
     def delete(self):
         super().delete()

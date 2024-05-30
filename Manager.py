@@ -24,6 +24,8 @@ from WTypes import *
 # Singleton
 class GameManager:
 
+    local_player = None
+
     # public
     deltaTime: float = 0.0
 
@@ -43,6 +45,7 @@ class GameManager:
     __mag_ratio = 3
     
     __objects = []
+    __targets = []
     
     assets = {}
 
@@ -73,9 +76,15 @@ class GameManager:
     
     def registerObject(self, _object):
         self.__objects.append(_object)
-    
+
     def removeObject(self, _object):
         self.__objects.remove(_object)
+    
+    def registerTarget(self, _target):
+        self.__targets.append(_target)
+        
+    def removeTarget(self, _target):
+        self.__targets.remove(_target)
     
     def getScreenSize(self):
         return self.__screenSize
@@ -96,10 +105,10 @@ class GameManager:
         pygame.display.set_caption('Wormy')
 
     def beginLoop(self):
-        self.__mainLoop_host()
+        self.__mainLoop()
     
     # private
-    def __mainLoop_host(self):
+    def __mainLoop(self):
         while True:
             for event in pygame.event.get():
                 if event.type == QUIT:
@@ -127,7 +136,23 @@ class GameManager:
                         for obj in self.__objects:
                             if obj.objType == 0:
                                 obj.debug_CCharacter_1(3)
+                    if event.key == K_r:
+                        self.local_player.isGameOver = False
+                    if event.key == K_q:
+                        for obj in self.__objects:
+                            if obj.objType == 0:
+                                obj.speed -= 1
+                    if event.key == K_e:
+                        for obj in self.__objects:
+                            if obj.objType == 0:
+                                obj.speed += 1
             
+            if self.local_player.isGameOver:
+                break
+            
+            for obj in self.__objects:
+                if obj.objType == 0:
+                    obj.checkGameOver()
             
             for obj in self.__objects:
                 obj.earlyUpdate()
@@ -152,9 +177,36 @@ class GameManager:
             for obj in self.__objects:
                 if obj.drawLayer == 2 and obj.visible:
                     obj.draw(self.__displaySurf)
-                    
+            
             pygame.display.update()
             self.deltaTime = self.__fpsClock.tick(self.__fps)
+    
+    
+    def __terminate(self):
+        pygame.quit()
+        exit(0)
+
+    def __drawGrid(self):
+        for x in range(0, self.__screenWidth, self.__cellSize):  # draw vertical lines
+            pygame.draw.line(self.__displaySurf, DARKGRAY, (x, 0), (x, self.__screenHeight))
+        for y in range(0, self.__screenHeight, self.__cellSize):  # draw horizontal lines
+            pygame.draw.line(self.__displaySurf, DARKGRAY, (0, y), (self.__screenWidth, y))
+
+    @property
+    def cellSize(self):
+        return self.__cellSize
+
+    @property
+    def mag_ratio(self):
+        return self.__mag_ratio
+
+    @property
+    def objects(self):
+        return self.__objects
+    
+    @property
+    def targets(self):
+        return self.__targets
     
     """
     def __showStartScreen(self):
@@ -202,17 +254,6 @@ class GameManager:
             self.__terminate()
         return keyUpEvents[0].key
     """
-    
-    def __terminate(self):
-        pygame.quit()
-        exit(0)
-
-    def __drawGrid(self):
-        for x in range(0, self.__screenWidth, self.__cellSize):  # draw vertical lines
-            pygame.draw.line(self.__displaySurf, DARKGRAY, (x, 0), (x, self.__screenHeight))
-        for y in range(0, self.__screenHeight, self.__cellSize):  # draw horizontal lines
-            pygame.draw.line(self.__displaySurf, DARKGRAY, (0, y), (self.__screenWidth, y))
-            
     """
     def __showGameOverScreen(self):
         gameOverFont = pygame.font.Font('freesansbold.ttf', 150)
@@ -235,14 +276,6 @@ class GameManager:
                 pygame.event.get()  # clear event queue
                 return
     """
-    
-    @property
-    def cellSize(self):
-        return self.__cellSize
-    
-    @property
-    def mag_ratio(self):
-        return self.__mag_ratio
     
 class OptionManager:
 
@@ -306,4 +339,3 @@ class OptionManager:
                 return False
             
             return True
-                

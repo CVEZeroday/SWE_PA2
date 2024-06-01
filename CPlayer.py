@@ -27,20 +27,27 @@ class CPlayer(CCharacter):
     direction_buf: deque = None
     
     # private
-    __prev_coord = None
     __buffer_max_size = 3
-    
+
+    __feverTimeSpeed = 4
+    __feverTimeMaxLength = 7000 # milliseconds
+    __feverTimeRemain = 0
+
+    __baseSpeed = None
+
     isGameOver: bool = True
-    
+
     def __init__(self, _pos: WPair = None, _scale: WPair = None, _coord: WPair = None):
         super().__init__(_pos, _scale, _coord)
         self.__components.append(self)
         self.__pivots.append(self)
         self.objType = 0
-        self.__prev_coord = self.coord
         self.direction_buf = deque()
+        self.drawLayer = 1
         
         self.isGameOver = False
+
+        self.__baseSpeed = self.speed
         
         self.addComponent()
         
@@ -118,18 +125,39 @@ class CPlayer(CCharacter):
         
     def earlyUpdate(self):
         super().earlyUpdate()
-    
+
+
     def update(self):
         super().update()
-        
+
+        for target in self._gameManager.targets:
+            if target.coord == self.coord:
+                target.delete()
+                self.addComponent()
+                if self.__feverTimeRemain > 0:
+                    self.addComponent()
+
+                self._gameManager.createNewTarget()
+
+                if target.objType == 4:
+                    self.__baseSpeed += 2
+                elif target.objType == 5:
+                    self.__baseSpeed -= 2
+                elif target.objType == 6:
+                    self.__feverTimeRemain = self.__feverTimeMaxLength
+
+        if self.__feverTimeRemain > 0:
+            self.speed = self.__baseSpeed + self.__feverTimeSpeed
+            self.__feverTimeRemain -= self._gameManager.deltaTime
+        else:
+            self.speed = self.__baseSpeed
+            self.__feverTimeRemain = 0
+
         while len(self.direction_buf) > self.__buffer_max_size:
             self.direction_buf.pop()
 
-        if self.__prev_coord != self.coord:
-            
-            self._gameManager.gameMap[self.__prev_coord[0]][self.__prev_coord[1]] = 0
-            self._gameManager.gameMap[self.coord[0]][self.coord[1]] = 1
-            
+        if self._prev_coord != self.coord:
+
             while self.direction_buf:
                 _newDirection = self.direction_buf.pop()
                 if self.direction != _newDirection:
@@ -139,15 +167,29 @@ class CPlayer(CCharacter):
                     _cellSize = self._gameManager.cellSize
                     self.pos = ((self.pos + _cellSize // 2) // _cellSize) * _cellSize
                     self.addPivot(_oldDirection, _newDirection)
-                    break
-            
 
-        self.__prev_coord = self.coord
+                    for i in range(1, 10):
+                        _tmp = self._prev_coord + _oldDirection * i
+                        if _tmp[0] > 63 or _tmp[0] < 0 or _tmp[1] > 35 or _tmp[1] < 0:
+                            break
+                        self._gameManager.gameMap[_tmp[0]][_tmp[1]] = 0
+
+                    break
+
+            if 63 >= self.coord[0] >= 0 and 35 >= self.coord[1] >= 0:
+                self._gameManager.gameMap[self.coord[0]][self.coord[1]] = 1
+            for i in range(1, 10): # 머리 포함 10칸 스폰 금지
+                _tmp = self.coord + self.direction * i
+                if _tmp[0] > 63 or _tmp[0] < 0 or _tmp[1] > 35 or _tmp[1] < 0:
+                    break
+                self._gameManager.gameMap[_tmp[0]][_tmp[1]] = 2
+
+        self._prev_coord = self.coord
         #print("CPlayer: "+ str(self.pos))
     
     def lateUpdate(self):
         super().lateUpdate()
-        print(self.isGameOver)
+        #print(self.isGameOver)
         self.__setObjImage()
         
     def checkGameOver(self):

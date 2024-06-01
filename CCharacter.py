@@ -21,10 +21,14 @@ class CCharacter(WObject):
     id: int = 0
     direction: WPair = None
     speed = 8 # coord/s
+
+    # private
+    _prev_coord = None
     
     def __init__(self, _pos: WPair = None, _scale: WPair = None, _coord: WPair = None):
         super().__init__(_pos, _scale, _coord)
         self.direction = WPair(1, 0)
+        self._prev_coord = self.coord
     
     # public
     # TODO: 부드럽게 이동하는거 구현
@@ -39,7 +43,7 @@ class CCharacter(WObject):
         
     def update(self):
         super().update()
-        
+
     def lateUpdate(self):
         super().lateUpdate()
         self.pos = self.pos + (self.direction * (self._gameManager.deltaTime * 0.001 * self.speed * self._gameManager.cellSize))
@@ -61,7 +65,7 @@ class CCharacterComponent(CCharacter):
         self.id = _id
         self.pivot = self.head.pivots[-1]
         self.objType = 1
-        
+        self.drawLayer = 1
         #print("_pos: " + str(_pos) + "pos of __prev: " + str(self.__prev.pos))
     
     def earlyUpdate(self):
@@ -70,9 +74,6 @@ class CCharacterComponent(CCharacter):
     def update(self):
         #print(self.coord)
         super().update()
-        
-        if not self.visible:
-            self.visible = True
         
         if self.coord == self.pivot.coord:
             #self.visible = False
@@ -85,9 +86,19 @@ class CCharacterComponent(CCharacter):
                 
                 if self.head.getLen - 1 == self.id: # if CCharacterComponent is tail
                     self.head.removePivot() # remove last pivot
-                
+
+        if self._prev_coord != self.coord:
+            if self == self.head.components[-1]:
+                if 63 >= self._prev_coord[0] >= 0 and 35 >= self._prev_coord[1] >= 0:
+                    self._gameManager.gameMap[self._prev_coord[0]][self._prev_coord[1]] = 0
+
+            if 63 >= self.coord[0] >= 0 and 35 >= self.coord[1] >= 0:
+                self._gameManager.gameMap[self.coord[0]][self.coord[1]] = 1
+
         self.speed = self.head.speed
-        
+        self._prev_coord = self.coord
+
+
         #print(self.head.pos - self.pos)
         #print("component: " + str(self.pos))
     def lateUpdate(self):
@@ -130,7 +141,7 @@ class CCharacterPivot(WObject):
         self.prev = self.head
         #print("pivot: " + str(self.coord))
         
-        self.drawLayer += 1
+        self.drawLayer = 2
         
         if self.__pivotType == 0:
             self._objImage = GameManager.assets["body_bottomleft"]

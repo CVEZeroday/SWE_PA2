@@ -43,11 +43,14 @@ class GameManager:
     __screenWidth: int = 1920 # screenWidth(1280 : 1920 : 2560 : 3840) = mag_ratio(2:3:4:6) = cell_size(20:30:40:60)
     __screenHeight: int = 1080
     __mag_ratio = 3
+
+    __newTargetInterval = 3000 # milliseconds
+    __newTargetRemain = 0
     
     __objects = []
     __targets = []
     
-    gameMap = [[0 for i in range(36)] for j in range(64)]
+    gameMap = [[0 for i in range(36)] for j in range(64)] # 1: 플레이어 몸통, 2: 플레이어가 향하는 방향 9칸, 3: 먹이
     
     assets = {}
 
@@ -58,7 +61,10 @@ class GameManager:
 
     def __init__(self):
         # load in memory
-        GameManager.assets["apple"] = pygame.image.load("assets/apple.png")
+        GameManager.assets["target_normal"] = pygame.image.load("assets/target_normal.png")
+        GameManager.assets["target_speedUp"] = pygame.image.load("assets/target_speedUp.png")
+        GameManager.assets["target_speedDown"] = pygame.image.load("assets/target_speedDown.png")
+        GameManager.assets["target_feverTime"] = pygame.image.load("assets/target_feverTime.png")
         GameManager.assets["body_bottomleft"] = pygame.image.load("assets/body_bottomleft.png")
         GameManager.assets["body_bottomright"] = pygame.image.load("assets/body_bottomright.png")
         GameManager.assets["body_horizontal"] = pygame.image.load("assets/body_horizontal.png")
@@ -73,15 +79,29 @@ class GameManager:
         GameManager.assets["tail_up"] = pygame.image.load("assets/tail_up.png")
         GameManager.assets["tail_left"] = pygame.image.load("assets/tail_left.png")
         GameManager.assets["tail_right"] = pygame.image.load("assets/tail_right.png")
-        
+
     # public
-    
+
     def registerObject(self, _object):
         self.__objects.append(_object)
 
     def removeObject(self, _object):
         self.__objects.remove(_object)
-    
+
+    def createNewTarget(self):
+        from TTarget import TNormal, TSpeedUp, TSpeedDown, TFeverTime
+        _rnd = random.randint(0, 99)
+        if _rnd < 50: # 50%
+            TNormal()
+            return
+        if _rnd < 80: # 30%
+            TSpeedUp()
+            return
+        if _rnd < 95: # 15%
+            TSpeedDown()
+            return
+        TFeverTime() # 5%
+
     def registerTarget(self, _target):
         self.__targets.append(_target)
         
@@ -150,12 +170,20 @@ class GameManager:
                                 obj.speed += 1
                     
                     if event.key == K_z:
-                        for i in range(64):
-                            print(self.gameMap[i])
+                        #for i in range(64):
+                            #print(self.gameMap[i])
+                        self.createNewTarget()
             
             if self.local_player.isGameOver:
                 break
-            
+
+            # ================ debug end ====================
+
+            if self.__newTargetRemain <= 0:
+                self.createNewTarget()
+                self.__newTargetRemain = self.__newTargetInterval
+            self.__newTargetRemain -= self.deltaTime
+
             for obj in self.__objects:
                 if obj.objType == 0:
                     obj.checkGameOver()

@@ -17,6 +17,7 @@ from Debug import *
 from WTypes import WPair
 from Manager import OptionManager, GameManager
 from CPlayer import CPlayer
+from TTarget import *
 
 def main():
     gameManager = GameManager()
@@ -116,6 +117,7 @@ def main():
 @debug_func
 def debug_main(gameManager):
     gameManager.local_player = CPlayer(WPair(0, 0), WPair(1, 1), WPair(0, 0))
+    TSpeedUp()
     
 
 def debug():

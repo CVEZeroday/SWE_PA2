@@ -126,6 +126,10 @@ class CPlayer(CCharacter):
             self.direction_buf.pop()
 
         if self.__prev_coord != self.coord:
+            
+            self._gameManager.gameMap[self.__prev_coord[0]][self.__prev_coord[1]] = 0
+            self._gameManager.gameMap[self.coord[0]][self.coord[1]] = 1
+            
             while self.direction_buf:
                 _newDirection = self.direction_buf.pop()
                 if self.direction != _newDirection:

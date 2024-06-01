@@ -47,6 +47,8 @@ class GameManager:
     __objects = []
     __targets = []
     
+    gameMap = [[0 for i in range(36)] for j in range(64)]
+    
     assets = {}
 
     def __new__(cls, *args):
@@ -146,6 +148,10 @@ class GameManager:
                         for obj in self.__objects:
                             if obj.objType == 0:
                                 obj.speed += 1
+                    
+                    if event.key == K_z:
+                        for i in range(64):
+                            print(self.gameMap[i])
             
             if self.local_player.isGameOver:
                 break

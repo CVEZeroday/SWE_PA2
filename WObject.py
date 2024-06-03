@@ -11,7 +11,6 @@
 
 import pygame
 
-from Manager import GameManager
 from WTypes import WPair
 
 class WObject:
@@ -35,6 +34,7 @@ class WObject:
     
     
     def __init__(self, _pos: WPair = None, _scale: WPair = None, _coord: WPair = None):
+        from Manager import GameManager
         self._gameManager = GameManager()
 
         if _pos is not None:

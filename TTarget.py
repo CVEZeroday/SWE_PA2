@@ -68,3 +68,9 @@ class TFeverTime(TTarget):
         super().__init__(_pos, _scale, _coord)
         self.objType = 6
         self._objImage = self._gameManager.assets["target_feverTime"]
+        
+class THalf(TTarget):
+    def __init__(self, _pos: WPair = None, _scale: WPair = None, _coord: WPair = None):
+        super().__init__(_pos, _scale, _coord)
+        self.objType = 7
+        self._objImage = self._gameManager.assets["target_half"]

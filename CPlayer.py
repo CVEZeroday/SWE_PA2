@@ -36,6 +36,8 @@ class CPlayer(CCharacter):
     __feverTimeRemain = 0
     
     __baseSpeed = None
+    
+    __halfTarget = 0
 
     def __init__(self, _pos: WPair = None, _scale: WPair = None, _coord: WPair = None, _direction: WPair = None):
         super().__init__(_pos, _scale, _coord)
@@ -168,9 +170,17 @@ class CPlayer(CCharacter):
         for target in self._gameManager.targets:
             if target.coord == self.coord:
                 target.delete()
-                self.addComponent()
-                if self.__feverTimeRemain > 0:
+                if target.objType == 7:
+                    if self.__feverTimeRemain > 0:
+                        self.__halfTarget += 2
+                    else:
+                        self.__halfTarget += 1
+                    if self.__halfTarget % 2 == 0:
+                        self.addComponent()
+                else:
                     self.addComponent()
+                    if self.__feverTimeRemain > 0:
+                        self.addComponent()
 
                 if target.objType == 4:
                     if self.__baseSpeed <= 14: # 최대속도 16

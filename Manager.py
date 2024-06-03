@@ -20,6 +20,7 @@ import json, os, random, pygame
 from pygame.locals import *
 
 from Controller import *
+from TTarget import THalf
 from WTypes import *
 
 # Singleton
@@ -38,6 +39,7 @@ class GameManager:
     __fpsClock = None
     __displaySurf = None
     __basicFont = None
+    __nameFont = None
 
     __fps = 360
     __cellSize: int = 0
@@ -62,6 +64,7 @@ class GameManager:
     def __init__(self):
         # load in memory
         GameManager.assets["target_normal"] = pygame.image.load("assets/target_normal.png")
+        GameManager.assets["target_half"] = pygame.image.load("assets/target_half.png")
         GameManager.assets["target_speedUp"] = pygame.image.load("assets/target_speedUp.png")
         GameManager.assets["target_speedDown"] = pygame.image.load("assets/target_speedDown.png")
         GameManager.assets["target_feverTime"] = pygame.image.load("assets/target_feverTime.png")
@@ -107,10 +110,15 @@ class GameManager:
                 TSpeedDown(_coord = _coord, _pos = _pos)
             elif _type == 3:
                 TFeverTime(_coord = _coord, _pos = _pos)
+            elif _type == 4:
+                THalf(_coord = _coord, _pos = _pos)
             return
         
         _rnd = random.randint(0, 99)
-        if _rnd < 50: # 50%
+        if _rnd < 10:
+            THalf(_coord = _coord, _pos = _pos)
+            return
+        if _rnd < 50: # 40%
             TNormal(_coord = _coord, _pos = _pos)
             return
         if _rnd < 80: # 30%
@@ -142,6 +150,7 @@ class GameManager:
         pygame.init()
         self.__fpsClock = pygame.time.Clock()
         self.__displaySurf = pygame.display.set_mode(self.__screenSize.toTuple())
+        self.__nameFont = pygame.font.Font('freesansbold.ttf', 8 * self.__mag_ratio)
         self.__basicFont = pygame.font.Font('freesansbold.ttf', 9 * self.__mag_ratio)
         pygame.display.set_caption('Wormy by T.Y.KIM')
 
@@ -164,11 +173,7 @@ class GameManager:
                 elif event.type == KEYDOWN:
                     if event.key == K_ESCAPE:
                         self.__terminate()
-            
-            #if self.local_player.isGameOver:
-                #break
-
-            # ================ debug end ====================
+                        
             self.loopCount += 1
 
             if self.__newTargetRemain <= 0 and len(self.__targets) < 30:
@@ -206,7 +211,8 @@ class GameManager:
             for obj in self.__objects:
                 if obj.drawLayer == 2 and obj.visible:
                     obj.draw(self.__displaySurf)
-            
+
+            self.__drawName()
             self.__drawUI()
             
             if self.local_player.controller.isGameOver:
@@ -254,11 +260,25 @@ class GameManager:
         
             UISurf = self.__basicFont.render(_str, True, WHITE)
             UIRect = UISurf.get_rect()
-            UIRect.topleft = (10 * self.__mag_ratio, 10 * self.__mag_ratio + i * 10 * self.mag_ratio)
+            UIRect.topleft = (10 * self.__mag_ratio, 10 * self.__mag_ratio + i * 10 * self.__mag_ratio)
             i += 1
             BgRect = pygame.Rect(UIRect.left - 5 * self.__mag_ratio, UIRect.top, UIRect.width + 10 * self.__mag_ratio, UIRect.height)
             self.__drawRectAlpha(self.__displaySurf, (0, 0, 0, 128), BgRect)
             self.__displaySurf.blit(UISurf, UIRect)
+    
+    def __drawName(self):
+        for controller in self.__controllers:
+            if controller.puppet == self.local_player:
+                color = GREEN
+            else:
+                color = WHITE
+            UISurf = self.__nameFont.render(controller.name, True, color)
+            UIRect = UISurf.get_rect()
+            UIRect.center = (controller.puppet.pos + WPair(self.__cellSize // 2, -8 * self.__mag_ratio)).toTuple()
+            BgRect = pygame.Rect(UIRect.left - 2 * self.__mag_ratio, UIRect.top, UIRect.width + 4 * self.__mag_ratio, UIRect.height)
+            self.__drawRectAlpha(self.__displaySurf, (0, 0, 0, 64), BgRect)
+            self.__displaySurf.blit(UISurf, UIRect)
+    
     def __drawRectAlpha(self, surface, color, rect):
         shape_surf = pygame.Surface(pygame.Rect(rect).size, pygame.SRCALPHA)
         pygame.draw.rect(shape_surf, color, shape_surf.get_rect())
@@ -304,7 +324,7 @@ class OptionManager:
             self.isFirstPlay = True
             with open('Options.json', 'w') as f:
                 self.__option = {
-                    "name": "player" + str(random.randint(100, 999)),
+                    "name": "Player" + str(random.randint(100, 999)),
                     "screenWidth" : 1920,
                     "screenHeight" : 1080
                 }

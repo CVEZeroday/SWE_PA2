@@ -48,7 +48,7 @@ class CCharacter(WObject):
         self.pos = self.pos + (self.direction * (self._gameManager.deltaTime * 0.001 * self.speed * self._gameManager.cellSize))
         
     def delete(self):
-        self._gameManager.createNewTarget(_type = 0, _coord = self.coord)
+        self._gameManager.createNewTarget(_type = 4, _coord = self.coord)
         self.coord = WPair(-1, -1)
         super().delete()
 

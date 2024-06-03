@@ -9,7 +9,7 @@
 /********************************************/
 """
 
-isDebugMode: bool = True
+isDebugMode: bool = False
 
 def debug_func(fn):
     if isDebugMode:

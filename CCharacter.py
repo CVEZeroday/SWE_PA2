@@ -22,7 +22,7 @@ class CCharacter(WObject):
     direction: WPair = None
     speed = 8 # coord/s
 
-    # private
+    # protected
     _prev_coord = None
     
     def __init__(self, _pos: WPair = None, _scale: WPair = None, _coord: WPair = None):
@@ -31,14 +31,13 @@ class CCharacter(WObject):
         self._prev_coord = self.coord
     
     # public
-    # TODO: 부드럽게 이동하는거 구현
     
     def earlyUpdate(self):
         super().earlyUpdate()
         if self.direction[0] > 0 or self.direction[1] > 0:
-            self.coord = self.pos.round() // self._gameManager.cellSize
+            self.coord = (self.pos // self._gameManager.cellSize).toInt()
         if self.direction[0] < 0 or self.direction[1] < 0:
-            self.coord = (self.pos.round() - self.direction * self._gameManager.cellSize) // self._gameManager.cellSize
+            self.coord = ((self.pos - self.direction * self._gameManager.cellSize) // self._gameManager.cellSize).toInt()
         # coord는 object 전체가 이동을 완료하면 바뀜
         
     def update(self):
@@ -47,7 +46,11 @@ class CCharacter(WObject):
     def lateUpdate(self):
         super().lateUpdate()
         self.pos = self.pos + (self.direction * (self._gameManager.deltaTime * 0.001 * self.speed * self._gameManager.cellSize))
-        #print("pos: {}".format(str(self.pos)))
+        
+    def delete(self):
+        self._gameManager.createNewTarget(_type = 0, _coord = self.coord)
+        self.coord = WPair(-1, -1)
+        super().delete()
 
 # class defining body components
 class CCharacterComponent(CCharacter):
@@ -66,13 +69,11 @@ class CCharacterComponent(CCharacter):
         self.pivot = self.head.pivots[-1]
         self.objType = 1
         self.drawLayer = 1
-        #print("_pos: " + str(_pos) + "pos of __prev: " + str(self.__prev.pos))
     
     def earlyUpdate(self):
         super().earlyUpdate()
         
     def update(self):
-        #print(self.coord)
         super().update()
         
         if self.coord == self.pivot.coord:
@@ -90,17 +91,14 @@ class CCharacterComponent(CCharacter):
         if self._prev_coord != self.coord:
             if self == self.head.components[-1]:
                 if 63 >= self._prev_coord[0] >= 0 and 35 >= self._prev_coord[1] >= 0:
-                    self._gameManager.gameMap[self._prev_coord[0]][self._prev_coord[1]] = 0
+                    self._gameManager.gameMap[int(self._prev_coord[0])][int(self._prev_coord[1])] = 0
 
             if 63 >= self.coord[0] >= 0 and 35 >= self.coord[1] >= 0:
-                self._gameManager.gameMap[self.coord[0]][self.coord[1]] = 1
+                self._gameManager.gameMap[int(self.coord[0])][int(self.coord[1])] = 1
 
         self.speed = self.head.speed
         self._prev_coord = self.coord
 
-
-        #print(self.head.pos - self.pos)
-        #print("component: " + str(self.pos))
     def lateUpdate(self):
         if self.head.components[self.id - 1].direction == self.direction:
             _tmp = self.head.components[self.id - 1].pos - self.pos
@@ -109,6 +107,7 @@ class CCharacterComponent(CCharacter):
         self.__setObjImage()
         super().lateUpdate()
         
+    # private
     def __setObjImage(self):
         if self.head.getLen - 1 == self.id:
             if self.direction == WPair(1, 0):
@@ -131,6 +130,7 @@ class CCharacterPivot(WObject):
     head = None
     prev = None
     
+    # private
     __pivotType = -1 # 0 : bottom-left, 1 : bottom-right, 2 : top-left, 3 : top-right
     
     def __init__(self, _head, _pivotType: int, _pos: WPair = None, _scale: WPair = None, _coord: WPair = None):
@@ -139,8 +139,6 @@ class CCharacterPivot(WObject):
         self.__pivotType = _pivotType
         self.objType = 2
         self.prev = self.head
-        #print("pivot: " + str(self.coord))
-        
         self.drawLayer = 2
         
         if self.__pivotType == 0:

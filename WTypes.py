@@ -9,6 +9,7 @@
 /********************************************/
 """
 
+from pygame.locals import *
 import math
 
 WHITE = (255, 255, 255)
@@ -25,13 +26,21 @@ YELLOW = (255, 255, 0)
 BG_1 = (176, 207, 87)
 BG_2 = (182, 212, 94)
 
-# Works as WPair(1, 2) + WPair(2, 3) == WPair(3, 5)
+KEY_LEFT = (K_a, K_LEFT)
+KEY_UP = (K_w, K_UP)
+KEY_RIGHT = (K_d, K_RIGHT)
+KEY_DOWN = (K_s, K_DOWN)
+KEY_RESURRECT = (K_SPACE, 0)
+
 class WPair:
-    
-    __known_instances = []
-    __known_pairs = ((0,0), (0,1), (1,0), (-1,0), (0,-1), (-1,-1))
+
+    # public
     x = None
     y = None
+    
+    # private
+    __known_instances = []
+    __known_pairs = ((0,0), (0,1), (1,0), (-1,0), (0,-1), (-1,-1)) # This is for saving memory
     
     def __new__(cls, *args):
         if not cls.__known_instances:
@@ -55,9 +64,65 @@ class WPair:
             self.x = _x
             self.y = _y
 
+    # public
     def toTuple(self):
         return (self.x, self.y)
 
+    def toInt(self):
+        return WPair(int(self.x), int(self.y))
+
+    def toFloat(self):
+        return WPair(float(self.x), int(self.y))
+
+    def distance(self, other):
+        assert type(other) == WPair, 'Type error in WPair.distance'
+        return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
+
+    def floor(self):
+        return WPair(math.floor(self.x), math.floor(self.y))
+
+    def round(self):
+        return WPair(round(self.x), round(self.y))
+
+    def normalize(self): # 절댓값의 최댓값이 1이 되도록 만듦
+
+        _x: float = 0.0
+        _y: float = 0.0
+
+        if self.x == 0 and self.y == 0:
+            return WPair(0, 0)
+        if self.x == 0:
+            return WPair(0, self.y / abs(self.y))
+        if self.y == 0:
+            return WPair(self.x / abs(self.x), 0)
+        if self.x == self.y:
+            return WPair(1, 1)
+
+        ratio = abs(self.x / self.y)
+
+        if abs(self.x) > abs(self.y):
+            _x = self.x / ratio
+            _y = self.y / ratio
+        else:
+            _x = self.x * ratio
+            _y = self.y * ratio
+
+        return WPair(_x, _y)
+
+    def normalize2(self): # 방향을 x축 또는 y축 중 하나의 방향로 단순화함
+        if abs(self.x) > abs(self.y):
+            _x = 1 if self.x > 0 else (-1 if self.x < 0 else 0)
+            _y = 0
+        elif abs(self.x) < abs(self.y):
+            _x = 0
+            _y = 1 if self.y > 0 else (-1 if self.y < 0 else 0)
+        else:
+            _x = 0
+            _y = 0
+
+        return WPair(_x, _y)
+    
+    # operator overriding
     def __add__(self, other):
         assert type(other) in (WPair, int, float), 'Type error in WPair.__add__'
         if type(other) == WPair:
@@ -109,65 +174,14 @@ class WPair:
         if key == 0:
             self.x = value
         if key == 1:
-            self.y = value
-            
-    def toInt(self):
-        return WPair(int(self.x), int(self.y))
-
-    def toFloat(self):
-        return WPair(float(self.x), int(self.y))
+            self.y = value 
     
     def __str__(self):
         return str(self.x) + ", " + str(self.y)
-            
-    def distance(self, other):
-        assert type(other) == WPair, 'Type error in WPair.distance'
-        return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
     
-    def floor(self):
-        return WPair(math.floor(self.x), math.floor(self.y))
-    
-    def round(self):
-        return WPair(round(self.x), round(self.y))
-    
-    def normalize(self): # 절댓값의 최댓값이 1이 되도록 만듦
-        
-        _x: float = 0.0
-        _y: float = 0.0
-        
-        if self.x == 0 and self.y == 0:
-            return WPair(0, 0)
-        if self.x == 0:
-            return WPair(0, self.y / abs(self.y))
-        if self.y == 0:
-            return WPair(self.x / abs(self.x), 0)
-        if self.x == self.y:
-            return WPair(1, 1)
-        
-        ratio = abs(self.x / self.y)
-        
-        if abs(self.x) > abs(self.y):
-            _x = self.x / ratio
-            _y = self.y / ratio
-        else:
-            _x = self.x * ratio
-            _y = self.y * ratio
-            
-        return WPair(_x, _y)
-    
-    def normalize2(self): # 방향을 x축 또는 y축 중 하나의 방향로 단순화함
-        if abs(self.x) > abs(self.y):
-            _x = 1 if self.x > 0 else (-1 if self.x < 0 else 0)
-            _y = 0
-        elif abs(self.x) < abs(self.y):
-            _x = 0
-            _y = 1 if self.y > 0 else (-1 if self.y < 0 else 0)
-        else:
-            _x = 0
-            _y = 0
-            
-        return WPair(_x, _y)
-
+"""
+!!! NOT IMPLEMENTED YET !!!
+"""
 class NPacket:
     
     type: int = 0

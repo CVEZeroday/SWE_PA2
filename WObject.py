@@ -15,6 +15,8 @@ from Manager import GameManager
 from WTypes import WPair
 
 class WObject:
+    
+    # public
     pos = None
     coord = None
     scale = None
@@ -58,10 +60,9 @@ class WObject:
                               (10 * self._gameManager.mag_ratio))
         self._objImage = pygame.transform.scale(self._objImage, self._objImageSize.toTuple())
         
-        #print(WPair(self._objImage.get_width(), self._objImage.get_height()))
-        
         self._gameManager.registerObject(self)
 
+    # public
     def draw(self, _displaySurf: pygame.Surface):
         self._objImageSize = (WPair(self._objImage.get_width(), self._objImage.get_height()).normalize() * self.scale *
                               (10 * self._gameManager.mag_ratio))

@@ -1,4 +1,5 @@
 ﻿"""
+!!! DEPRECATED
 /********************************************/
 /*     Copyrights (C) 2024 CVE_zeroday.     */
 /*          All rights reserved.            */

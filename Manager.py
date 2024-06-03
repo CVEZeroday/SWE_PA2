@@ -19,16 +19,19 @@ Some code is from
 import json, os, random, pygame
 from pygame.locals import *
 
+from Controller import *
 from WTypes import *
 
 # Singleton
 class GameManager:
 
-    local_player = None
-
     # public
+    local_player = None
     deltaTime: float = 0.0
-
+    loopCount = 0
+    gameMap = [[0 for i in range(36)] for j in range(64)] # 1: 플레이어 몸통, 2: 플레이어가 향하는 방향 9칸, 3: 먹이
+    assets = {}
+    
     # private
     __instance = None
     
@@ -44,15 +47,12 @@ class GameManager:
     __screenHeight: int = 1080
     __mag_ratio = 3
 
-    __newTargetInterval = 3000 # milliseconds
+    __newTargetInterval = 2000 # milliseconds
     __newTargetRemain = 0
     
     __objects = []
     __targets = []
-    
-    gameMap = [[0 for i in range(36)] for j in range(64)] # 1: 플레이어 몸통, 2: 플레이어가 향하는 방향 9칸, 3: 먹이
-    
-    assets = {}
+    __controllers = []
 
     def __new__(cls, *args):
         if cls.__instance is None:
@@ -88,19 +88,38 @@ class GameManager:
     def removeObject(self, _object):
         self.__objects.remove(_object)
 
-    def createNewTarget(self):
+    def createNewTarget(self, _type = None, _coord = None):
         from TTarget import TNormal, TSpeedUp, TSpeedDown, TFeverTime
+        
+        if _coord is not None:
+            if _coord[0] < 0 or _coord[0] > 63 or _coord[1] < 0 or _coord[1] > 35:
+                return
+            _pos = _coord * self.__cellSize
+        else:
+            _pos = None
+            
+        if _type is not None:
+            if _type == 0:
+                TNormal(_coord = _coord, _pos = _pos)
+            elif _type == 1:
+                TSpeedUp(_coord = _coord, _pos = _pos)
+            elif _type == 2:
+                TSpeedDown(_coord = _coord, _pos = _pos)
+            elif _type == 3:
+                TFeverTime(_coord = _coord, _pos = _pos)
+            return
+        
         _rnd = random.randint(0, 99)
         if _rnd < 50: # 50%
-            TNormal()
+            TNormal(_coord = _coord, _pos = _pos)
             return
         if _rnd < 80: # 30%
-            TSpeedUp()
+            TSpeedUp(_coord = _coord, _pos = _pos)
             return
         if _rnd < 95: # 15%
-            TSpeedDown()
+            TSpeedDown(_coord = _coord, _pos = _pos)
             return
-        TFeverTime() # 5%
+        TFeverTime(_coord = _coord, _pos = _pos) # 5%
 
     def registerTarget(self, _target):
         self.__targets.append(_target)
@@ -123,66 +142,42 @@ class GameManager:
         pygame.init()
         self.__fpsClock = pygame.time.Clock()
         self.__displaySurf = pygame.display.set_mode(self.__screenSize.toTuple())
-        self.__basicFont = pygame.font.Font('freesansbold.ttf', 18)
-        pygame.display.set_caption('Wormy')
+        self.__basicFont = pygame.font.Font('freesansbold.ttf', 9 * self.__mag_ratio)
+        pygame.display.set_caption('Wormy by T.Y.KIM')
 
     def beginLoop(self):
+        _controller = SingleController()
+        _controller.name = self.__name
+        self.__controllers.append(_controller)
+        self.__controllers.append(AIController())
+        #self.__controllers.append(AIController())
+        #self.__controllers.append(AIController())
         self.__mainLoop()
     
     # private
     def __mainLoop(self):
         while True:
-            for event in pygame.event.get():
+            _events = pygame.event.get()
+            for event in _events:
                 if event.type == QUIT:
                     self.__terminate()
                 elif event.type == KEYDOWN:
                     if event.key == K_ESCAPE:
                         self.__terminate()
-                    if event.key == K_SPACE:
-                        for obj in self.__objects:
-                            if obj.objType == 0:
-                                obj.addComponent()
-                    if event.key == K_a:
-                        for obj in self.__objects:
-                            if obj.objType == 0:
-                                obj.debug_CCharacter_1(0)
-                    if event.key == K_w:
-                        for obj in self.__objects:
-                            if obj.objType == 0:
-                                obj.debug_CCharacter_1(1)
-                    if event.key == K_d:
-                        for obj in self.__objects:
-                            if obj.objType == 0:
-                                obj.debug_CCharacter_1(2)
-                    if event.key == K_s:
-                        for obj in self.__objects:
-                            if obj.objType == 0:
-                                obj.debug_CCharacter_1(3)
-                    if event.key == K_r:
-                        self.local_player.isGameOver = False
-                    if event.key == K_q:
-                        for obj in self.__objects:
-                            if obj.objType == 0:
-                                obj.speed -= 1
-                    if event.key == K_e:
-                        for obj in self.__objects:
-                            if obj.objType == 0:
-                                obj.speed += 1
-                    
-                    if event.key == K_z:
-                        #for i in range(64):
-                            #print(self.gameMap[i])
-                        self.createNewTarget()
             
-            if self.local_player.isGameOver:
-                break
+            #if self.local_player.isGameOver:
+                #break
 
             # ================ debug end ====================
+            self.loopCount += 1
 
-            if self.__newTargetRemain <= 0:
+            if self.__newTargetRemain <= 0 and len(self.__targets) < 30:
                 self.createNewTarget()
                 self.__newTargetRemain = self.__newTargetInterval
             self.__newTargetRemain -= self.deltaTime
+
+            for controller in self.__controllers:
+                controller.controllerUpdate(_events)
 
             for obj in self.__objects:
                 if obj.objType == 0:
@@ -212,6 +207,11 @@ class GameManager:
                 if obj.drawLayer == 2 and obj.visible:
                     obj.draw(self.__displaySurf)
             
+            self.__drawUI()
+            
+            if self.local_player.controller.isGameOver:
+                self.__showGameOverScreen()
+            
             pygame.display.update()
             self.deltaTime = self.__fpsClock.tick(self.__fps)
     
@@ -225,6 +225,44 @@ class GameManager:
             pygame.draw.line(self.__displaySurf, DARKGRAY, (x, 0), (x, self.__screenHeight))
         for y in range(0, self.__screenHeight, self.__cellSize):  # draw horizontal lines
             pygame.draw.line(self.__displaySurf, DARKGRAY, (0, y), (self.__screenWidth, y))
+    
+    def __showGameOverScreen(self):
+        gameOverFont = pygame.font.Font('freesansbold.ttf', 75 * self.__mag_ratio)
+        gameSurf = gameOverFont.render('Game', True, RED)
+        overSurf = gameOverFont.render('Over', True, RED)
+        gameRect = gameSurf.get_rect()
+        overRect = overSurf.get_rect()
+        gameRect.midtop = (self.__screenWidth / 2, 5 * self.mag_ratio)
+        overRect.midtop = (self.__screenWidth / 2, gameRect.height + 20 * self.__mag_ratio)
+
+        self.__displaySurf.blit(gameSurf, gameRect)
+        self.__displaySurf.blit(overSurf, overRect)
+        self.__drawPressKeyMsg()
+
+    def __drawPressKeyMsg(self):
+        pressKeySurf = self.__basicFont.render('Press SPACE to resurrect.', True, DARKGRAY)
+        pressKeyRect = pressKeySurf.get_rect()
+        pressKeyRect.topleft = (self.__screenWidth / 2 - 120, self.__screenHeight / 2)
+        self.__displaySurf.blit(pressKeySurf, pressKeyRect)
+    
+    def __drawUI(self):
+        i = 0
+        for controller in self.__controllers:
+            _str = "Name: " + controller.name + ", Length: " + str(controller.puppet.getLen) + ", Speed: " + str(controller.puppet.speed)
+            if controller.puppet.isFeverTime:
+                _str += ", FEVER TIME!"
+        
+            UISurf = self.__basicFont.render(_str, True, WHITE)
+            UIRect = UISurf.get_rect()
+            UIRect.topleft = (10 * self.__mag_ratio, 10 * self.__mag_ratio + i * 10 * self.mag_ratio)
+            i += 1
+            BgRect = pygame.Rect(UIRect.left - 5 * self.__mag_ratio, UIRect.top, UIRect.width + 10 * self.__mag_ratio, UIRect.height)
+            self.__drawRectAlpha(self.__displaySurf, (0, 0, 0, 128), BgRect)
+            self.__displaySurf.blit(UISurf, UIRect)
+    def __drawRectAlpha(self, surface, color, rect):
+        shape_surf = pygame.Surface(pygame.Rect(rect).size, pygame.SRCALPHA)
+        pygame.draw.rect(shape_surf, color, shape_surf.get_rect())
+        surface.blit(shape_surf, rect)
 
     @property
     def cellSize(self):
@@ -237,84 +275,21 @@ class GameManager:
     @property
     def objects(self):
         return self.__objects
-    
+
     @property
     def targets(self):
         return self.__targets
-    
-    """
-    def __showStartScreen(self):
-        titleFont = pygame.font.Font('freesansbold.ttf', 100)
-        titleSurf1 = titleFont.render('Wormy!', True, WHITE, DARKGREEN)
-        titleSurf2 = titleFont.render('Wormy!', True, GREEN)
 
-        degrees1 = 0
-        degrees2 = 0
-        while True:
-            self.__displaySurf.fill(BLACK)
-            rotatedSurf1 = pygame.transform.rotate(titleSurf1, degrees1)
-            rotatedRect1 = rotatedSurf1.get_rect()
-            rotatedRect1.center = (self.__screenWidth / 2, self.__screenHeight / 2)
-            self.__displaySurf.blit(rotatedSurf1, rotatedRect1)
-
-            rotatedSurf2 = pygame.transform.rotate(titleSurf2, degrees2)
-            rotatedRect2 = rotatedSurf2.get_rect()
-            rotatedRect2.center = (self.__screenWidth / 2, self.__screenHeight / 2)
-            self.__displaySurf.blit(rotatedSurf2, rotatedRect2)
-
-            self.__drawPressKeyMsg()
-
-            if self.__checkForKeyPress():
-                pygame.event.get()  # clear event queue
-                return
-            pygame.display.update()
-            self.__fpsClock.tick(self.__fps)
-            degrees1 += 3  # rotate by 3 degrees each frame
-            degrees2 += 7  # rotate by 7 degrees each frame
-    def __drawPressKeyMsg(self):
-        pressKeySurf = self.__basicFont.render('Press a key to play.', True, DARKGRAY)
-        pressKeyRect = pressKeySurf.get_rect()
-        pressKeyRect.topleft = (self.__screenWidth - 200, self.__screenHeight - 30)
-        self.__displaySurf.blit(pressKeySurf, pressKeyRect)
-
-    def __checkForKeyPress(self):
-        if len(pygame.event.get(QUIT)) > 0:
-            self.__terminate()
-
-        keyUpEvents = pygame.event.get(KEYUP)
-        if len(keyUpEvents) == 0:
-            return None
-        if keyUpEvents[0].key == K_ESCAPE:
-            self.__terminate()
-        return keyUpEvents[0].key
-    """
-    """
-    def __showGameOverScreen(self):
-        gameOverFont = pygame.font.Font('freesansbold.ttf', 150)
-        gameSurf = gameOverFont.render('Game', True, WHITE)
-        overSurf = gameOverFont.render('Over', True, WHITE)
-        gameRect = gameSurf.get_rect()
-        overRect = overSurf.get_rect()
-        gameRect.midtop = (self.__screenWidth / 2, 10)
-        overRect.midtop = (self.__screenWidth / 2, gameRect.height + 10 + 25)
-
-        self.__displaySurf.blit(gameSurf, gameRect)
-        self.__displaySurf.blit(overSurf, overRect)
-        self.__drawPressKeyMsg()
-        pygame.display.update()
-        pygame.time.wait(500)
-        self.__checkForKeyPress()  # clear out any key presses in the event queue
-
-        while True:
-            if self.__checkForKeyPress():
-                pygame.event.get()  # clear event queue
-                return
-    """
+    @property
+    def controllers(self):
+        return self.__controllers
     
 class OptionManager:
 
+    # public
     isFirstPlay = True
     
+    # private
     __option = None
     __ctx = None
     
@@ -329,7 +304,6 @@ class OptionManager:
             self.isFirstPlay = True
             with open('Options.json', 'w') as f:
                 self.__option = {
-                    "fps" : 60,
                     "name": "player" + str(random.randint(100, 999)),
                     "screenWidth" : 1920,
                     "screenHeight" : 1080
@@ -337,7 +311,8 @@ class OptionManager:
                 json.dump(self.__option, f, indent = '\t')
         
         self.__ctx.parseOption(self.__option) 
-        
+    
+    # public
     def updateOption(self, key: str, data):
         self.__option[key] = data
         with open('Options.json', 'w') as f:
@@ -350,15 +325,7 @@ class OptionManager:
     
     def isValidOption(self, key: str, data):
         
-        assert key in ("fps", "screenWidth", "name"), 'Invalid key error in OptionManager.isValidOption'
-        
-        if key == "fps":
-            if type(data) != int:
-                return False
-            if data not in (30, 60, 144, 240):
-                return False
-            
-            return True
+        assert key in ("screenWidth", "name"), 'Invalid key error in OptionManager.isValidOption'
         
         if key == "screenWidth":
             if type(data) != int:

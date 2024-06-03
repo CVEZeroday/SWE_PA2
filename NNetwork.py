@@ -1,4 +1,5 @@
 """
+!!! NOT IMPLEMENTED YET !!!
 /********************************************/
 /*     Copyrights (C) 2024 CVE_zeroday.     */
 /*          All rights reserved.            */
@@ -17,6 +18,7 @@ import socket, threading
 
 class NClient:
     
+    # private
     __tcp_sock = None
     __udp_sock = None
     __conn_id = -1
@@ -28,7 +30,11 @@ class NClient:
         self.__udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 class NServer:
+
+    # public
+    max_conn_count = 5
     
+    # private
     __listening_sock = None
     __thrd = None # thread
     
@@ -36,15 +42,16 @@ class NServer:
     __udp_socks = []
     
     __conn_count = 0
-    max_conn_count = 5
     
     def __init__(self, port):
         self.__thrd = threading.Thread(target = self.__mthrd_manage_new_connection, args = (port))
         self.__thrd.start()
     
+    # public
     def start(self):
         pass
         
+    # private
     def __mthrd_manage_new_connection(self, port):
         while True:
             self.__listening_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

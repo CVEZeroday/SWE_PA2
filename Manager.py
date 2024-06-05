@@ -201,15 +201,15 @@ class GameManager:
                 obj.lateUpdate()
             
             for obj in self.__objects:
-                if obj.drawLayer == 0 and obj.visible:
+                if obj.drawLayer == 0:
                     obj.draw(self.__displaySurf)
                     
             for obj in self.__objects:
-                if obj.drawLayer == 1 and obj.visible:
+                if obj.drawLayer == 1:
                     obj.draw(self.__displaySurf)
 
             for obj in self.__objects:
-                if obj.drawLayer == 2 and obj.visible:
+                if obj.drawLayer == 2:
                     obj.draw(self.__displaySurf)
 
             self.__drawName()

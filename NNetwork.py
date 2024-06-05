@@ -15,6 +15,7 @@
 # Host 측에서 전부 계산
 
 import socket, threading
+from WTypes import *
 
 class NClient:
     
@@ -36,25 +37,43 @@ class NServer:
     
     # private
     __listening_sock = None
-    __thrd = None # thread
+    __listening_thrd = None
+    __loop_thrd = None
     
     __tcp_socks = []
+    __tcp_socks_lock = None
     __udp_socks = []
     
     __conn_count = 0
     
     def __init__(self, port):
-        self.__thrd = threading.Thread(target = self.__mthrd_manage_new_connection, args = (port))
-        self.__thrd.start()
+        self.__tcp_socks_lock = threading.Lock()
+        self.__listening_thrd = threading.Thread(target = self.__listening_thrd_manage_new_connection, args = port)
+        self.__listening_thrd.start()
+        
+        self.__loop_thrd = threading.Thread(target = self.__loop_thrd_main)
     
     # public
     def start(self):
         pass
         
     # private
-    def __mthrd_manage_new_connection(self, port):
+    def __listening_thrd_manage_new_connection(self, port):
         while True:
             self.__listening_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.__listening_sock.bind(('', port))
             self.__listening_sock.listen()
-            data = self.__listening_sock.recv(1024)
+            
+            self.__tcp_socks_lock.acquire()
+            self.__tcp_socks.append(self.__listening_sock)
+            self.__handshake(self.__listening_sock)
+            self.__tcp_socks_lock.release()
+    
+    def __handshake(self, _sock):
+        data = _sock.recv(HANDSHAKE_CLIENT_SIZE)
+        
+        
+    
+    def __loop_thrd_main(self):
+        while True:
+            pass

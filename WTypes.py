@@ -11,6 +11,7 @@
 
 from pygame.locals import *
 import math
+from ctypes import *
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -182,18 +183,23 @@ class WPair:
 """
 !!! NOT IMPLEMENTED YET !!!
 """
-class NPacket:
-    
-    type: int = 0
-    data = None
 
-    packet: bytes = None
+HANDSHAKE_CLIENT_SIZE = 12
+HANDSHAKE_SERVER_SIZE = 14
+KEY_INPUT_DATA_SIZE = 4
+GAME_EVENT_DATA_SIZE = 4
+PLAYER_DATA_SIZE = 20
+OBJECT_DATA_SIZE = 5
+SESSION_EVENT_DATA_SIZE = 4
+KEEP_ALIVE_SIZE = 1
+POSITION_UPDATE_DATA_SIZE = 24
+
     
     # type 0 : handshaking (TCP)
     #   Packet Structure (S/C == 1)
     #   0 . | . | . | . 1 . | . | . | . 2 . | . | . | . 3 . | . | . | . 4
     #   +---------------------------------------------------------------+
-    #   |S|    `type     |      id       |         client_name           |
+    #   |S|    type     |      id       |          client_name          |
     #   +---------------------------------------------------------------+
     #   |                          client_name                          |
     #   +---------------------------------------------------------------+
@@ -211,9 +217,49 @@ class NPacket:
     #   |  player_count |  object_count |                               |
     #   +---------------------------------------------------------------+
     # - S bit: 0 if Server, 1 if Client
-    def __pack_handshaking(self):
-        pass
 
+def pack_handshaking_client(_id: int, client_name: str):
+    packet = b''
+    packet += (c_uint8(0b10000000))
+    packet += c_uint8(_id)
+    packet += bytes(client_name, 'utf-8')
+    assert len(client_name) <= 10, "pack_handshaking_client: client_name must have length <= 10"
+    while len(packet) < HANDSHAKE_CLIENT_SIZE:
+        packet += c_uint8(0)
+    return packet
+
+def pack_handshaking_server(_user_id: int, server_name: str, player_count: int, object_count: int):
+    packet = b''
+    packet += (c_uint8(0))
+    packet += c_uint8(_user_id)
+    packet += bytes(server_name, 'utf-8')
+    assert len(server_name) <= 10, "pack_handshaking_server: server_name must have length <= 10"
+    while len(packet) < HANDSHAKE_SERVER_SIZE:
+        packet += c_uint8(0)
+    packet += c_uint16(player_count)
+    packet += c_uint16(object_count)
+    return packet
+
+def unpack_handshaking(_bytes: bytes):
+    if (_bytes[0] >> 7) == 1: # client
+        _id = int(_bytes[1])
+        _client_name = str(_bytes[2:12], 'utf-8')
+        
+        return _id, _client_name
+
+    elif (_bytes[0] >> 7) == 0: # server
+        _user_id = int(_bytes[1])
+        _server_name = str(_bytes[2:12], 'utf-8')
+        
+        player_count = _bytes[12] + _bytes[13]
+        player_count = c_uint16(player_count)
+        player_count = int(player_count)
+        
+        object_count = _bytes[14] + _bytes[15]
+        object_count = c_uint16(object_count)
+        object_count = int(object_count)
+
+        return _user_id, _server_name, player_count, object_count
     # type 1 : key_input data (TCP)
     #   Packet Structure
     #   0 . | . | . | . 1 . | . | . | . 2 . | . | . | . 3 . | . | . | . 4
@@ -292,24 +338,3 @@ class NPacket:
     #   |dir bit|                       objId                           |
     #   +---------------------------------------------------------------+
     # - dir bit : 각각 2bit씩 4bit로 이루어짐, 00 == 0, 01 == 1, 11 == -1
-
-    
-    def __init__(self, _type, *args, **kwargs):
-        self.type = _type
-        
-        if self.type == 0:
-            self.__pack_handshaking(*args, **kwargs)
-        elif self.type == 1:
-            self.__pack_key_input_data(*args, **kwargs)
-        elif self.type == 2:
-            self.__pack_game_event_data(*args, **kwargs)
-        elif self.type == 3:
-            self.__pack_player_data(*args, **kwargs)
-        elif self.type == 4:
-            self.__pack_object_data(*args, **kwargs)
-        elif self.type == 5:
-            self.__pack_session_event_data(*args, **kwargs)
-        elif self.type == 6:
-            self.__pack_keep_alive(*args, **kwargs)
-        elif self.type == 7:
-            self.__pack_position_update_data(*args, **kwargs)

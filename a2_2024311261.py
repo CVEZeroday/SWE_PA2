@@ -96,14 +96,11 @@ def debug_main(gameManager):
     
 
 def debug():
-    a = WPair(0, -1)
-    b = WPair(1, 3)
-    c = WPair(0, -1)
-    d = WPair(1, 3)
-    print(id(a))
-    print(id(b))
-    print(id(c))
-    print(id(d))
+    packet = pack_handshaking_client(0, "Pr 123")
+    unpacked = unpack_handshaking(packet)
+    print(len(packet))
+    print(unpacked[0])
+    print(unpacked[1])
 
 if __name__ == '__main__':
     main()
